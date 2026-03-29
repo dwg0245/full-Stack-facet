@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  db:
+    image: mariadb:latest
+    restart: always
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DB_PASS}
+      - MARIADB_DATABASE=facet
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db:/var/lib/mysql
+
+  backend:
+    # dockerfile로 이미지 생성하기
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_URL=${DB_URL}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+
+      - MAIL_ADDR=${MAIL_ADDR}
+      - MAIL_PASS=${MAIL_PASS}
+
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRE=${JWT_EXPIRE}
+
+      - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
+      - KAKAO_CLIENT_SECRET=${KAKAO_CLIENT_SECRET}
+      - KAKAO_REDIRECT_URI=${KAKAO_REDIRECT_URI}
+
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+
+      - PORTONE_SECRET=${PORTONE_SECRET}
+
+      - JAEGER_ENDPOINT=${JAEGER_ENDPOINT}
+
+      - SSL_KEY_STORE_PASSWORD=${SSL_KEY_STORE_PASSWORD}
+
+      - AES_KEY=${AES_KEY}
+    depends_on:
+      - db
+
+  frontend:
+    # dockerfile로 이미지 생성하기
+    build:
+      context: ./frontend/vue
+      dockerfile: Dockerfile
+      # dockerfile에게 환경변수를 넘겨준다.
+      args:
+        - VITE_BACKEND_URL=http://localhost:8080
+    ports:
+      - "80:80"  # 나중에 인증서 하면 443번으로 하기
+    depends_on:
+      - backend
